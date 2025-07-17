@@ -1,0 +1,150 @@
+CREATE DATABASE university;
+
+USE university;
+                                                                         Q1. -- 1️⃣ Student Table
+CREATE TABLE Student (
+    Stud_No CHAR(9) PRIMARY KEY,
+    Stud_lname CHAR(30),
+    Stud_fname CHAR(20),
+    Address CHAR(30),
+    City CHAR(10),
+    State CHAR(2),
+    PostalCode CHAR(6)
+);
+
+-- 2️⃣ Instructor Table
+CREATE TABLE Instructor (
+    Instructor_id CHAR(5) PRIMARY KEY,
+    Instructor_lname CHAR(15),
+    Instructor_fname CHAR(15),
+    Instructor_phone CHAR(10)
+);
+
+-- 3️⃣ Course Table
+CREATE TABLE Course (
+    Course_Code CHAR(6) PRIMARY KEY,
+    Course_Title CHAR(25),
+    Course_Hours NUMBER(2,0)
+);
+
+-- 4️⃣ Section Table
+CREATE TABLE Section (
+    Section_id CHAR(7) PRIMARY KEY,
+    Time_Offered CHAR(10),
+    Days_Offered CHAR(10),
+    Section_Room CHAR(8),
+    Class_Size NUMBER(3,0) CHECK (Class_Size >= 0),
+    Number_Enrolled NUMBER(3,0) CHECK (Number_Enrolled >= 0),
+    Instructor_id CHAR(5),
+    Course_Code CHAR(6),
+    FOREIGN KEY (Instructor_id) REFERENCES Instructor(Instructor_id),
+    FOREIGN KEY (Course_Code) REFERENCES Course(Course_Code)
+);
+
+-- 5️⃣ Enrollment Table
+CREATE TABLE Enrollment (
+    Stud_No CHAR(9),
+    Section_id CHAR(7),
+    Grade CHAR(2),
+    Time_Offered CHAR(10),
+    PRIMARY KEY (Stud_No, Section_id),
+    FOREIGN KEY (Stud_No) REFERENCES Student(Stud_No),
+    FOREIGN KEY (Section_id) REFERENCES Section(Section_id),
+    FOREIGN KEY (Time_Offered) REFERENCES Section(Time_Offered)
+);                                                                                            ---                                                                                  Q2.   ALTER TABLE Enrollment
+MODIFY Grade CHAR(4);
+---                                                                               Q3. ALTER TABLE Instructor
+ADD instructor_mailid CHAR(15);
+---                                                                                    Q4. CREATE VIEW Instructor_Sections_view AS
+SELECT 
+    I.Instructor_fname,
+    I.Instructor_lname,
+    S.Time_Offered,
+    S.Days_Offered,
+    S.Section_Room,
+    S.Section_id,
+    S.Course_Code,
+    C.Course_Title
+FROM 
+    Instructor I
+    JOIN Section S ON I.Instructor_id = S.Instructor_id
+    JOIN Course C ON S.Course_Code = C.Course_Code;
+---                                                                          Q5. INSERT INTO Student (Stud_No, Stud_lname, Stud_fname, Address, City, State, PostalCode)
+VALUES ('111111111', 'YourLastName', 'YourFirstName', 'YourAddress', 'YourCity', 'ST', '123456');
+  ---                                                                            Q6. INSERT INTO Course (Course_Code, Course_Title, Course_Hours)
+VALUES ('CS240', 'WEB DESIGN', 4);
+ ---                                                                                 Q7.  INSERT INTO Section (
+    Section_id,
+    Time_Offered,
+    Days_Offered,
+    Section_Room,
+    Class_Size,
+    Number_Enrolled,
+    Instructor_id,
+    Course_Code
+)
+VALUES (
+    '3011255',
+    '2-4',
+    'MW',
+    'BLGNG102',
+    35,
+    0,
+    '11113',  -- assuming this is the instructor ID
+    'CS240'
+);
+---                                                                                 Q8.  INSERT INTO Enrollment (Stud_No, Section_id, Grade, Time_Offered)
+VALUES ('111111111', '3011255', NULL, '2-4');
+  ---                                                                             Q9.  UPDATE Section
+SET Class_Size = ROUND(Class_Size * 1.10);
+  ---                                                                                 Q10.  UPDATE Section
+SET Time_Offered = '2-4',
+    Days_Offered = 'MW'
+WHERE Section_id = '3011236';
+    ---                                                                                    Q11. DELETE FROM Section
+WHERE Section_id = '3011255';
+  ---                                                                               Q12. ➡️ If any section still references this course in the Section table, this will fail because of the FK constraint.
+So you must first delete any dependent sections:
+
+DELETE FROM Section
+WHERE Course_Code = 'CS240';
+Then you can delete the course:
+
+DELETE FROM Course
+WHERE Course_Code = 'CS240';                                                            ---                                                                                     Q13.  SELECT Section_id, Time_Offered, Days_Offered, Course_Code
+FROM Section
+WHERE Class_Size BETWEEN 40 AND 50
+  AND Days_Offered LIKE '%M%';
+    ---                                                                             Q14. SELECT Course_Code, Course_Title, Course_Hours
+FROM Course
+WHERE Course_Hours = 4
+ORDER BY Course_Code DESC;
+    ---                                                                                                   Q15.SELECT Instructor_id, SUM(Class_Size) AS Total_Class_Size
+FROM Section
+GROUP BY Instructor_id
+ORDER BY Total_Class_Size;
+    ---                                                                                       Q16. SELECT Stud_No, Section_id, Grade
+FROM Enrollment
+WHERE Grade IN ('B+', 'B', 'B-');
+   ---                                                                                                  Q17. SELECT Course_Code, AVG(Class_Size) AS Avg_Class_Size
+FROM Section
+GROUP BY Course_Code;
+   ---                                                                                   Q18. SELECT I.Instructor_fname, I.Instructor_lname,
+       S.Time_Offered, S.Days_Offered, S.Section_Room,
+       C.Course_Code, C.Course_Title
+FROM Instructor I
+JOIN Section S ON I.Instructor_id = S.Instructor_id
+JOIN Course C ON S.Course_Code = C.Course_Code;
+      ---                                                                             Q19. SELECT S.Stud_fname, S.Stud_lname, E.Section_id, E.Grade
+FROM Student S
+JOIN Enrollment E ON S.Stud_No = E.Stud_No;
+   ---                                                                                             Q20. SELECT *
+FROM Student
+WHERE Stud_No NOT IN (SELECT Stud_No FROM Enrollment);
+   ---                                                                                 Q21. SELECT S.*
+FROM Student S
+JOIN Enrollment E ON S.Stud_No = E.Stud_No
+JOIN Section Sec ON E.Section_id = Sec.Section_id
+JOIN Course C ON Sec.Course_Code = C.Course_Code
+WHERE C.Course_Title = 'Web Technologies'
+  AND E.Grade = 'F';
